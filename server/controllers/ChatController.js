@@ -28,9 +28,9 @@ export const getChat = async (req, res) => {
         const userId = req.user._id;
 
         // Find chats by userId and sort latest first
-        const chat = await Chat.find({ userId }).sort({ updatedAt: -1 });
+        const chats = await Chat.find({ userId }).sort({ updatedAt: -1 });
 
-        res.json({ success: true, chat });
+        res.json({ success: true, chats });
     } catch (error) {
         res.json({ success: false, message: error.message });
     }
@@ -39,7 +39,7 @@ export const getChat = async (req, res) => {
 export const deleteChat = async (req, res) => {
     try {
         const userId = req.user._id;
-        const { chatId } = req.body; // chatId must come from request body
+        const { chatId } = req.body;
 
         // Delete only if the chat belongs to the logged-in user
         await Chat.deleteOne({ _id: chatId, userId });

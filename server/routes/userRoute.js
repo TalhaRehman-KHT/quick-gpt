@@ -7,7 +7,7 @@ const userRoute = express.Router();
 
 userRoute.post("/register", register)
 userRoute.post("/login", login)
-userRoute.post("/data", protect, getUser)
+userRoute.get("/data", protect, getUser)
 userRoute.post("/published-images", protect, getPublishedImage)
 
 

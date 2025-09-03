@@ -11,6 +11,7 @@ chatRouter.post('/create', protect, creatChat);
 chatRouter.get('/get', protect, getChat);
 
 // Delete a chat
+// chatRouter.delete('/delete', protect, deleteChat);
 chatRouter.delete('/delete', protect, deleteChat);
 
 export default chatRouter;

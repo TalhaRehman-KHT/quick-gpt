@@ -10,17 +10,19 @@ import { assets } from "./assets/assets.js";
 import Loading from "./Pages/Loading.jsx";
 import Login from "./Pages/Login.jsx";
 import { useAppContext } from "./Context/AppContext.jsx";
+import { Toaster } from 'react-hot-toast'
 
 function App() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { pathname } = useLocation();
 
-  const { user } = useAppContext();
+  const { user, loadingUser } = useAppContext();
 
-  if (pathname == "/loading") return <Loading />
+  if (pathname == "/loading" || loadingUser) return <Loading />
 
   return (
     <>
+      <Toaster />
       {/* Mobile hamburger (only show if sidebar is closed) */}
       {!isMenuOpen && (
         <img

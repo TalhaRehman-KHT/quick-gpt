@@ -2,10 +2,61 @@ import React, { useState } from "react";
 import { useAppContext } from "../Context/AppContext.jsx";
 import { assets } from "../assets/assets.js";
 import moment from "moment";
+import toast from "react-hot-toast";
 
 export default function Sidebar({ isMenuOpen, setIsMenuOpen }) {
-    const { chats, setSelectChat, theme, setTheme, user, navigate } = useAppContext();
+    const {
+        chats,
+        setSelectChat,
+        theme,
+        setTheme,
+        user,
+        navigate,
+        axios,
+        creatNewChat,
+        setChats,
+        fetchUserChats,
+        setToken,
+        token,
+    } = useAppContext();
+
     const [search, setSearch] = useState("");
+
+    const logout = () => {
+        localStorage.removeItem("token");
+        setToken(null);
+        toast.success("Logged Out Successfully");
+    };
+
+    const deleteChat = async (e, chatId) => {
+        try {
+            e.stopPropagation();
+            const confirmDelete = window.confirm("Are you sure you want to delete this chat?");
+            if (!confirmDelete) return;
+
+            if (!token) {
+                toast.error("No token found, please login again");
+                return;
+            }
+
+            // ✅ Use DELETE and send body properly
+            const { data } = await axios.delete("/api/chat/delete", {
+                headers: { Authorization: token },  // keep your middleware format
+                data: { chatId },                   // DELETE needs "data" for body
+            });
+
+            if (data.success) {
+                setChats((prev) => prev.filter((chat) => chat._id !== chatId));
+                await fetchUserChats();
+                toast.success(data.message);
+            } else {
+                toast.error(data.message);
+            }
+        } catch (error) {
+            console.error("Delete error:", error);
+            toast.error(error.response?.data?.message || error.message);
+        }
+    };
 
     return (
         <div
@@ -23,7 +74,10 @@ export default function Sidebar({ isMenuOpen, setIsMenuOpen }) {
             />
 
             {/* new chat button */}
-            <button className="flex justify-center items-center w-full py-2 mt-10 text-white bg-gradient-to-r from-[#A456F7] to-[#3D81F6] text-sm rounded-md cursor-pointer">
+            <button
+                onClick={creatNewChat}
+                className="flex justify-center items-center w-full py-2 mt-10 text-white bg-gradient-to-r from-[#A456F7] to-[#3D81F6] text-sm rounded-md cursor-pointer"
+            >
                 <span className="mr-2 text-2xl">+</span>New Chat
             </button>
 
@@ -47,41 +101,56 @@ export default function Sidebar({ isMenuOpen, setIsMenuOpen }) {
             {chats.length > 0 && <p className="mt-4 text-sm">Recent Chats</p>}
             <div className="flex-1 overflow-y-scroll mt-3 text-sm space-y-3">
                 {chats
-                    .filter((chat) =>
-                        chat.messages.length > 0
-                            ? chat.messages[0].content
-                                .toLowerCase()
-                                .includes(search.toLowerCase())
-                            : chat.name.toLowerCase().includes(search.toLowerCase())
-                    )
-                    .map((chat) => (
-                        <div
-                            key={chat._id}
-                            onClick={() => { navigate("/"); setSelectChat(chat); setIsMenuOpen(false) }}
-                            className="p-2 px-4 dark:bg-[#57317c]/10 border border-gray-300 dark:border-[#80609F]/15 rounded-md cursor-pointer flex justify-between group"
-                        >
-                            <div>
-                                <p className="truncate w-full">
-                                    {chat.messages.length > 0
-                                        ? chat.messages[0].content.slice(0, 32)
-                                        : chat.name}
-                                </p>
-                                <p className="text-xs text-gray-500 dark:text-[#B1A6C0]">
-                                    {moment(chat.updatedAt).fromNow()}
-                                </p>
+                    .filter((chat) => {
+                        const msgs = chat.message || [];
+                        if (msgs.length > 0) {
+                            return msgs[0].content?.toLowerCase().includes(search.toLowerCase());
+                        }
+                        return chat.name.toLowerCase().includes(search.toLowerCase());
+                    })
+                    .map((chat) => {
+                        const msgs = chat.message || [];
+                        return (
+                            <div
+                                key={chat._id}
+                                onClick={() => {
+                                    navigate("/");
+                                    setSelectChat(chat);
+                                    setIsMenuOpen(false);
+                                }}
+                                className="p-2 px-4 dark:bg-[#57317c]/10 border border-gray-300 dark:border-[#80609F]/15 rounded-md cursor-pointer flex justify-between group"
+                            >
+                                <div>
+                                    <p className="truncate w-full">
+                                        {msgs.length > 0 ? msgs[0].content.slice(0, 32) : chat.name}
+                                    </p>
+                                    <p className="text-xs text-gray-500 dark:text-[#B1A6C0]">
+                                        {moment(chat.updatedAt).fromNow()}
+                                    </p>
+                                </div>
+                                <img
+                                    onClick={(e) =>
+                                        toast.promise(deleteChat(e, chat._id), {
+                                            loading: "Deleting...",
+                                            success: "Chat deleted!",
+                                            error: "Failed to delete chat",
+                                        })
+                                    }
+                                    src={assets.bin_icon}
+                                    alt="delete"
+                                    className="hidden group-hover:block w-4 cursor-pointer not-dark:invert"
+                                />
                             </div>
-                            <img
-                                src={assets.bin_icon}
-                                alt=""
-                                className="hidden group-hover:block w-4 cursor-pointer not-dark:invert"
-                            />
-                        </div>
-                    ))}
+                        );
+                    })}
             </div>
 
             {/* Community Images */}
             <div
-                onClick={() => { navigate("/community"); setIsMenuOpen(false) }}
+                onClick={() => {
+                    navigate("/community");
+                    setIsMenuOpen(false);
+                }}
                 className="flex items-center gap-2 p-3 mt-4 border border-gray-300 dark:border-white/15 rounded-md cursor-pointer hover:scale-105 transition-all"
             >
                 <img src={assets.gallery_icon} alt="" className="w-5 not-dark:invert" />
@@ -90,7 +159,10 @@ export default function Sidebar({ isMenuOpen, setIsMenuOpen }) {
 
             {/* Credits Purchases Option */}
             <div
-                onClick={() => { navigate("/credits"); setIsMenuOpen(false) }}
+                onClick={() => {
+                    navigate("/credits");
+                    setIsMenuOpen(false);
+                }}
                 className="flex items-center gap-2 p-3 mt-4 border border-gray-300 dark:border-white/15 rounded-md cursor-pointer hover:scale-105 transition-all"
             >
                 <img src={assets.diamond_icon} alt="" className="w-5 dark:invert" />
@@ -127,6 +199,7 @@ export default function Sidebar({ isMenuOpen, setIsMenuOpen }) {
                 </p>
                 {user && (
                     <img
+                        onClick={logout}
                         src={assets.logout_icon}
                         className="h-5 cursor-pointer hidden not-dark:invert group-hover:block"
                         alt="logout"
