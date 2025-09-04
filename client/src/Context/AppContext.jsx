@@ -114,6 +114,7 @@ export const AppContextProvider = ({ children }) => {
         token,
         setToken,
         axios,
+        fetchUser
     };
 
     return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

@@ -8,7 +8,7 @@ const userRoute = express.Router();
 userRoute.post("/register", register)
 userRoute.post("/login", login)
 userRoute.get("/data", protect, getUser)
-userRoute.post("/published-images", protect, getPublishedImage)
-
+//userRoute.get("/published-images", getPublishedImage)
+userRoute.get("/published-images", getPublishedImage);
 
 export default userRoute;

@@ -1,6 +1,7 @@
 import User from "../models/User.js";
 import jwt from 'jsonwebtoken';
 import bcrypt from "bcryptjs";
+import Chat from "../models/Chat.js";
 
 
 // Generate Tokken
@@ -73,12 +74,10 @@ export const getUser = async (req, res) => {
 
 
 
-
 export const getPublishedImage = async (req, res) => {
     try {
-
         const publishedImage = await Chat.aggregate([
-            { $unwind: `$messages` },
+            { $unwind: "$message" }, // ✅ fix: "message" not "messages"
             {
                 $match: {
                     "message.isImage": true,
@@ -88,18 +87,18 @@ export const getPublishedImage = async (req, res) => {
             {
                 $project: {
                     _id: 0,
-                    imageUrl: '$messages.content',
-                    userName: '$userName'
+                    imageUrl: "$message.content", // ✅ fix: message.content
+                    userName: "$userName"
                 }
             }
-        ])
+        ]);
 
         res.json({
-            succeess: true,
+            success: true, // ✅ fixed typo
             images: publishedImage.reverse()
-        })
+        });
 
     } catch (error) {
-        res.json({ succeess: false, message: error.message })
+        res.json({ success: false, message: error.message });
     }
-}
+};
